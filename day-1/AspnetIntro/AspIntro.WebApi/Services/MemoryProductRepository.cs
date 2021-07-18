@@ -1,0 +1,57 @@
+﻿using AspIntro.WebApi.Contracts;
+using AspIntro.WebApi.Exceptions;
+using AspIntro.WebApi.Models;
+using Microsoft.Extensions.Caching.Distributed;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace AspIntro.WebApi.Services
+{
+
+    public class MemoryProductRepository : IProductsRepository
+    {
+        private const string PRODUCTS_CACHE_KEY = "products";
+        private readonly IDistributedCache _distributedCache;
+
+        public MemoryProductRepository(IDistributedCache distributedCache)
+        {
+            _distributedCache = distributedCache;
+        }
+        public async Task<Product[]> GetAll()
+        {
+            var productsString = await _distributedCache.GetStringAsync(PRODUCTS_CACHE_KEY);
+            if (string.IsNullOrEmpty(productsString))
+            {
+                await Task.Delay(5000);
+                var products = new Product[] {
+                new Product { Id = 1, ProductName = "Bamba", ExpireDate = DateTime.Now.AddDays(10), Price = 12.6 },
+                new Product { Id = 2, ProductName = "Bisli", ExpireDate = DateTime.Now.AddDays(140), Price = 19.5 },
+                new Product { Id = 3, ProductName = "Kefli", ExpireDate = DateTime.Now.AddDays(50), Price = 20.6 } };
+                await _distributedCache.SetStringAsync(PRODUCTS_CACHE_KEY, JsonConvert.SerializeObject(products));
+            }
+
+            var stringFromCache = await _distributedCache.GetStringAsync(PRODUCTS_CACHE_KEY);
+            return JsonConvert.DeserializeObject<Product[]>(stringFromCache);
+        }
+
+        public async Task<Product> Update(Product p)
+        {
+            var products = await this.GetAll();
+            var product = products.FirstOrDefault(x=>x.Id == p.Id);
+            if(product == null)
+            {
+                throw new CourseApiException(ApiExceptionCodes.NotFound);
+            }
+            product.Price = p.Price;
+            product.ProductName = p.ProductName;
+            product.ExpireDate = p.ExpireDate;
+            await _distributedCache.SetStringAsync(PRODUCTS_CACHE_KEY, JsonConvert.SerializeObject(products));
+            return product;
+
+
+        }
+    }
+}
