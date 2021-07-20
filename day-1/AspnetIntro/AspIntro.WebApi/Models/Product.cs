@@ -11,6 +11,5 @@ namespace AspIntro.WebApi.Models
         public string ProductName { get; set; }
         public DateTime ExpireDate { get; set; }
         public double Price { get; set; }
-        //public string Producer { get; set; }
     }
 }

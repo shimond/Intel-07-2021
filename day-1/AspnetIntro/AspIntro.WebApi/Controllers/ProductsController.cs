@@ -1,9 +1,11 @@
-﻿using AspIntro.WebApi.Contracts;
+﻿using AspIntro.WebApi.ActionFilters;
+using AspIntro.WebApi.Contracts;
 using AspIntro.WebApi.Exceptions;
 using AspIntro.WebApi.Models;
 using AspIntro.WebApi.Models.Dtos;
 using AspIntro.WebApi.Services;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,6 +19,7 @@ using System.Threading.Tasks;
 namespace AspIntro.WebApi.Controllers
 {
     [Route("api/[controller]")]
+    //[ServiceFilter(typeof(ValidationActionFilter))]
     [ApiController]
     public class ProductsController : ControllerBase
     {
@@ -26,8 +29,8 @@ namespace AspIntro.WebApi.Controllers
         private readonly IMapper _mapper;
 
         public ProductsController(
-            ILogger<ProductsController> logger, 
-            IProductsRepository productsRepository, 
+            ILogger<ProductsController> logger,
+            IProductsRepository productsRepository,
             IMapper mapper,
             ICurrencyService currencyService)
         {
@@ -37,8 +40,19 @@ namespace AspIntro.WebApi.Controllers
             _mapper = mapper;
         }
 
+        [HttpGet("{id}")]
+        [ServiceFilter(typeof(CourseApiExceptionActionFilter))]
+
+        public async Task<IActionResult> GetById(int id, string name)
+        {
+            var product = await _productsRepository.GetById(id);
+            return Ok(product);
+        }
+
+        [ServiceFilter(typeof(CourseApiExceptionActionFilter))]
         [HttpGet(Name = "GetAllProducts")]
         [ProducesResponseType(200, Type = typeof(ProductDto[]))]
+        [ResponseCache(Duration = 50)]
         public async Task<IActionResult> GetAll()
         {
             Product[] products = await _productsRepository.GetAll();
@@ -50,39 +64,35 @@ namespace AspIntro.WebApi.Controllers
         }
 
 
-        [HttpPut("{id}", Name = "UpdateProduct")]
-        [ProducesResponseType(200, Type = typeof(ProductDto))]
-        public async Task<IActionResult> UpdateProduct(int id, ProductDto dto)
+        [HttpGet("Search", Name = "SearchProducts")]
+        [ResponseCache(Duration = 50, VaryByQueryKeys = new string[] { "*" })]
+        public async Task<IActionResult> SearchProducts([FromQuery] SearchProductDto model)
         {
-            try
-            {
-                dto.Id = id;  // RECORD!
-                var productAfterUpdate = await _productsRepository.Update(_mapper.Map<Product>(dto));
-                return Ok(productAfterUpdate);
-            }
-            catch (CourseApiException  ex) when (ex.ErrorCode == ApiExceptionCodes.NotFound)
-            {
-                return NotFound($"Product ({id}) cannot be found..");
-            }
-            catch (CourseApiException ex) when (ex.ErrorCode == ApiExceptionCodes.Conflict)
-            {
-                return Conflict();
-            }
+            var searchModel = _mapper.Map<SearchProductModel>(model);
+            var result = await _productsRepository.SearchProduct(searchModel);
+            return Ok(result);
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        [HttpPut("{id}", Name = "UpdateProduct")]
+        [ProducesResponseType(200, Type = typeof(ProductDto))]
+        [ProducesResponseType(409, Type = typeof(ProductDto))]
+        //[ServiceFilter(typeof(CourseApiExceptionActionFilter))]
+        //[ServiceFilter(typeof(ValidationActionFilter))]
+        [ServiceFilter(typeof(AddCreatedByActionFilter<ProductDto>))]
+        public async Task<IActionResult> UpdateProduct(int id, ProductDto dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var copy = dto with { Id = id };
+            var productAfterUpdate = await _productsRepository.Update(_mapper.Map<Product>(copy));
+            return Ok(productAfterUpdate);
+        }
     }
 }
+
+//[FromQuery] ?name=david
+//[FromForm]? name=david age=32
+//[FromBody] - > JSON/XML
+//[FromHeader]?myheaderValue=shimonValue

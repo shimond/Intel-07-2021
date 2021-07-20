@@ -1,4 +1,6 @@
+using AspIntro.WebApi.ActionFilters;
 using AspIntro.WebApi.Contracts;
+using AspIntro.WebApi.Models.Dtos;
 using AspIntro.WebApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,8 +34,15 @@ namespace AspIntro.WebApi
             services.AddDistributedMemoryCache();
             services.AddScoped<ICurrencyService, CurrencyService>();
             services.AddScoped<IProductsRepository, MemoryProductRepository>();
+            services.AddScoped<CourseApiExceptionActionFilter>();
+            services.AddScoped<ValidationActionFilter>();
+            services.AddScoped<AddCreatedByActionFilter<ProductDto>>();
             
-            services.AddControllers();
+            services.AddControllers(p =>
+            {
+                //p.Filters.AddService(typeof(CourseApiExceptionActionFilter);
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "AspIntro.WebApi", Version = "v1" });
@@ -42,6 +51,13 @@ namespace AspIntro.WebApi
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.Use(async (context, next) =>
+            {
+                await next();
+            });
+
+            app.UseResponseCaching(); // Cities, Countries, Streets
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -57,7 +73,7 @@ namespace AspIntro.WebApi
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers(); 
+                endpoints.MapControllers();
             });
         }
     }

@@ -37,11 +37,32 @@ namespace AspIntro.WebApi.Services
             return JsonConvert.DeserializeObject<Product[]>(stringFromCache);
         }
 
+        public async Task<Product> GetById(int id)
+        {
+            var all = await GetAll();
+            var product = all.FirstOrDefault(x => x.Id == id);
+            if (product == null)
+            {
+                throw new CourseApiException(ApiExceptionCodes.NotFound);
+            }
+            return product;
+        }
+
+        public async Task<Product[]> SearchProduct(SearchProductModel model)
+        {
+            var products = await GetAll();
+            return products.Where(x =>
+            x.ProductName.Contains(model.Name) 
+            && x.Price <= model.MaxPrice
+            && x.Price >= model.MinPrice
+            ).ToArray();
+        }
+
         public async Task<Product> Update(Product p)
         {
             var products = await this.GetAll();
-            var product = products.FirstOrDefault(x=>x.Id == p.Id);
-            if(product == null)
+            var product = products.FirstOrDefault(x => x.Id == p.Id);
+            if (product == null)
             {
                 throw new CourseApiException(ApiExceptionCodes.NotFound);
             }

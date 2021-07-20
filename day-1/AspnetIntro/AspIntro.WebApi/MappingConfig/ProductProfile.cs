@@ -17,6 +17,8 @@ namespace AspIntro.WebApi.MappingConfig
                 .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price))
                 .ForMember(dest => dest.ExpireDate, opt => opt.MapFrom(src => src.ExpireDate))
                 .ReverseMap();
+
+            CreateMap<SearchProductModel, SearchProductDto>().ReverseMap();
         }
     }
 }

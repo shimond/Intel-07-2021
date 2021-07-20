@@ -11,7 +11,12 @@ namespace AspIntro.WebApi.Contracts
     {
         Task<Product[]> GetAll();
 
+        Task<Product> GetById(int id);
+
+
         Task<Product> Update(Product p);
+
+        Task<Product[]> SearchProduct(SearchProductModel model);
 
     }
 }
