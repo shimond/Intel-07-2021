@@ -36,17 +36,15 @@ namespace AspIntro.WebApi
                     config.AddJsonFile("redis.json", true, true);
                     var tempConfiguration = config.Build();
                     config.Add(new MyCustomConfigurationSource(tempConfiguration["ConnectionStrings:myDb"]));
-                })
-            //.ConfigureLogging(logging =>
-            //{
-            //    //logging.AddProvider
-            //    //logging.ClearProviders(); // Console, Debug, EvetLog (windows)
-            //    logging.AddSeq();
-
-            //})
-                .ConfigureWebHostDefaults(webBuilder =>
+                }).ConfigureLogging(logging =>
                 {
-                    webBuilder.UseStartup<Startup>();
-                });
+                    //logging.AddProvider
+                    //logging.ClearProviders(); // Console, Debug, EvetLog (windows)
+                    //docker run --name seq - d--restart unless-stopped - e ACCEPT_EULA = Y - p 5341:80 datalust / seq:latest
+                    logging.AddSeq();
+                }).ConfigureWebHostDefaults(webBuilder =>
+                    {
+                        webBuilder.UseStartup<Startup>();
+                    });
     }
 }
