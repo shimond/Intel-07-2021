@@ -27,12 +27,11 @@ namespace AspIntro.WebApi
         public static IHostBuilder CreateHostBuilder(string[] args) =>
                 Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration(config =>
-                config.AddJsonFile("redis.json", true, true)
                 {
-                    var tempConfiguration =  config.Build();
+                    config.AddJsonFile("redis.json", true, true);
+                    var tempConfiguration = config.Build();
                     config.Add(new MyCustomConfigurationSource(tempConfiguration["ConnectionStrings:myDb"]));
                 })
-
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
