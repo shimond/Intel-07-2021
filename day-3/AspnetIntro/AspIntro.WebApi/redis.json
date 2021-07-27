@@ -1,0 +1,7 @@
+{
+  "Redis": {
+    "ConnectionString": "localhost:5002",
+    "UserName": "useNameConfig",
+    "Password": "Aa88888888"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "ConnectionStrings": {
+    "myDbConnectionName": "Data Source=.\\sqlexpress;Initial Catalog=johnbryce-2021;Integrated Security=True"
+  },
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft.Hosting.Lifetime": "Verbose",
+        "Microsoft": "Fatal"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message,30:lj} {Properties:j}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://localhost:5341"
+        }
+      },
+      {
+        "Name": "MSSqlServer",
+        "Args": {
+          "connectionString": "myDbConnectionName",
+          "sinkOptionsSection": {
+            "tableName": "Logs"
+
+          }
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "FromDiagnosticContext",
+      "WithMachineName",
+      "WithThreadId",
+      "WithProcessId",
+      "WithCorrelationId"
+    ]
+  }
+}
